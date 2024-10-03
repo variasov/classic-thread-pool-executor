@@ -1,6 +1,7 @@
 import logging
 import queue
 import time
+from functools import partial
 from threading import Event, Thread
 from typing import Optional, ClassVar
 
@@ -54,7 +55,11 @@ class Executor:
             thread.start()
 
     def submit(
-            self, callback, block: bool = True, timeout: Optional[float] = None
+            self,
+            callback,
+            *args,
+            block: bool = True,
+            timeout: Optional[float] = None,
     ) -> None:
         """
         Запрашивает добавление callback-а в очередь исполнителя.
@@ -68,6 +73,8 @@ class Executor:
         то элемент помещается в очередь немедленно, иначе вызывается
         исключение Full ('timeout' в этом случае игнорируется).
         """
+        if args:
+            callback = partial(callback, *args)
         self._inbox.put(callback, block, timeout)
 
     def _execute(self) -> None:
